@@ -127,6 +127,8 @@ namespace RaisingStudio.Data
             string tableName = GetTableName(entityType);
             List<PropertyInfo> properties = new List<PropertyInfo>();
             List<ColumnAttribute> propertyColumnAttributes = new List<ColumnAttribute>();
+            List<string> dbGeneratedColumnList = new List<string>();
+            List<string> autoSyncOnInsertColumnList = new List<string>();
             foreach (var propertyInfo in entityType.GetProperties())
             {
                 ColumnAttribute[] columnAttributes = (ColumnAttribute[])propertyInfo.GetCustomAttributes(typeof(ColumnAttribute), false);
@@ -146,7 +148,9 @@ namespace RaisingStudio.Data
                     ColumnAttribute columnAttribute = new ColumnAttribute
                     {
                         Name = propertyInfo.Name, 
-                        IsPrimaryKey = (keyAttributes != null && keyAttributes.Length > 0),
+                        IsPrimaryKey = (keyAttributes != null && keyAttributes.Length > 0) || propertyInfo.Name == "Id",
+                        IsDbGenerated = propertyInfo.Name == "Id",
+                        AutoSync = propertyInfo.Name == "Id" ? AutoSync.OnInsert : AutoSync.Default,
                         DbType = dbType,
                         CanBeNull = canBeNull
                     };
@@ -577,6 +581,7 @@ namespace RaisingStudio.Data
             Command insertCommand = commandBuilder.GetInsertCommand(columns);
             SetParameterValues<T>(insertCommand, dataObject, new string[] { }, columns);
             int result = this.provider.Database.ExecuteNonQuery(insertCommand);
+            // TODO: autoSyncOnInsertColumns
             return result;
         }
 
@@ -705,6 +710,7 @@ namespace RaisingStudio.Data
             Command insertCommand = commandBuilder.GetInsertCommand(columns);
             SetParameterValues<T>(insertCommand, dataObject, new string[] { }, columns);
             int result = this.provider.Database.ExecuteNonQuery(insertCommand);
+            // TODO: autoSyncOnInsertColumns
             return result;
         }
 
