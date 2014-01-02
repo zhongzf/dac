@@ -547,14 +547,7 @@ namespace RaisingStudio.Data
             }
         }
 
-        public IEnumerable<T> GetEnumerator<T>(IDataReader dataReader) where T : new()
-        {
-            Func<object, object>[] converters;
-            Action<T, object>[] propertySetters = GetPropertySetters<T>(out converters);
-            return GetEnumerator<T>(dataReader, propertySetters, converters);
-        }
-
-        public IEnumerable<T> GetEnumerator<T>(IDataReader dataReader, string[] columns) where T : new()
+        public IEnumerable<T> GetEnumerator<T>(IDataReader dataReader, string[] columns = null) where T : new()
         {
             Func<object, object>[] converters;
             Action<T, object>[] propertySetters = ((columns != null) && (columns.Length > 0)) ? GetPropertySetters<T>(columns, out converters) : GetPropertySetters<T>(out converters);
@@ -567,14 +560,14 @@ namespace RaisingStudio.Data
             string[] columns;
             Command command = commandBuilder.GetSelectCommand(out columns);
             var dataReader = this.provider.Database.ExecuteReader(command);
-            if (columns != null)
-            {
+            //if (columns != null)
+            //{
                 return GetEnumerator<T>(dataReader, columns);
-            }
-            else
-            {
-                return GetEnumerator<T>(dataReader);
-            }
+            //}
+            //else
+            //{
+            //    return GetEnumerator<T>(dataReader);
+            //}
         }
 
         public int Insert<T>(T dataObject)
@@ -715,15 +708,8 @@ namespace RaisingStudio.Data
             return result;
         }
 
-        public int GetCount<T>()
-        {
-            CommandBuilder commandBuilder = GetCommandBuilder(null, tableName, propertyNames, propertyTypes, columnNames, columnTypes);
-            Command command = commandBuilder.GetSelectCountCommand();
-            int result = Convert.ToInt32(this.provider.Database.ExecuteScalar(command));
-            return result;
-        }
 
-        public int GetCount<T>(Expression expression)
+        public int GetCount<T>(Expression expression = null)
         {
             CommandBuilder commandBuilder = GetCommandBuilder(expression, tableName, propertyNames, propertyTypes, columnNames, columnTypes);
             Command command = commandBuilder.GetSelectCountCommand();
@@ -731,15 +717,7 @@ namespace RaisingStudio.Data
             return result;
         }
 
-        public long GetLongCount<T>()
-        {
-            CommandBuilder commandBuilder = GetCommandBuilder(null, tableName, propertyNames, propertyTypes, columnNames, columnTypes);
-            Command command = commandBuilder.GetSelectCountCommand();
-            long result = Convert.ToInt64(this.provider.Database.ExecuteScalar(command));
-            return result;
-        }
-
-        public long GetLongCount<T>(Expression expression)
+        public long GetLongCount<T>(Expression expression = null)
         {
             CommandBuilder commandBuilder = GetCommandBuilder(expression, tableName, propertyNames, propertyTypes, columnNames, columnTypes);
             Command command = commandBuilder.GetSelectCountCommand();
@@ -747,15 +725,7 @@ namespace RaisingStudio.Data
             return result;
         }
 
-        private object GetFunctionResult(string function, string column)
-        {
-            CommandBuilder commandBuilder = GetCommandBuilder(null, tableName, propertyNames, propertyTypes, columnNames, columnTypes);
-            Command command = commandBuilder.GetSelectFunctionCommand(function, column);
-            object result = this.provider.Database.ExecuteScalar(command);
-            return result;
-        }
-
-        private object GetFunctionResult(string function, string column, Expression expression)
+        private object GetFunctionResult(string function, string column, Expression expression = null)
         {
             CommandBuilder commandBuilder = GetCommandBuilder(expression, tableName, propertyNames, propertyTypes, columnNames, columnTypes);
             Command command = commandBuilder.GetSelectFunctionCommand(function, column);
@@ -763,45 +733,26 @@ namespace RaisingStudio.Data
             return result;
         }
 
-        public object GetSum<T>(string column)
-        {
-            return GetFunctionResult("SUM", column);
-        }
-
-        public object GetSum<T>(string column, Expression expression)
+        public object GetSum<T>(string column, Expression expression = null)
         {
             return GetFunctionResult("SUM", column, expression);
         }
 
-        public object GetAvg<T>(string column)
-        {
-            return GetFunctionResult("AVG", column);
-        }
-
-        public object GetAvg<T>(string column, Expression expression)
+        public object GetAvg<T>(string column, Expression expression = null)
         {
             return GetFunctionResult("AVG", column, expression);
         }
 
-        public object GetMin<T>(string column)
-        {
-            return GetFunctionResult("MIN", column);
-        }
-
-        public object GetMin<T>(string column, Expression expression)
+        public object GetMin<T>(string column, Expression expression = null)
         {
             return GetFunctionResult("MIN", column, expression);
         }
 
-        public object GetMax<T>(string column)
-        {
-            return GetFunctionResult("MAX", column);
-        }
-
-        public object GetMax<T>(string column, Expression expression)
+        public object GetMax<T>(string column, Expression expression = null)
         {
             return GetFunctionResult("MAX", column, expression);
         }
+
 
         public bool Exists<T>(T dataObject)
         {

@@ -44,9 +44,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CommandBuilder.cs" />
-    <Compile Include="CommandBuilderSettings.cs" />
+    <Compile Include="Settings\CommandBuilderSettings.cs" />
     <Compile Include="CommandConverter.cs" />
-    <Compile Include="CommandConverterSettings.cs" />
+    <Compile Include="Settings\CommandConverterSettings.cs" />
     <Compile Include="Common\Command.cs" />
     <Compile Include="Common\CommandSegment.cs" />
     <Compile Include="Common\CommandSegmentType.cs" />
@@ -54,13 +54,13 @@
     <Compile Include="Converters\EnumConverter.cs" />
     <Compile Include="Converters\IDbTypeConverter.cs" />
     <Compile Include="Converters\IntToEnumConverter.cs" />
-    <Compile Include="Commands.cs" />
+    <Compile Include="Settings\Commands.cs" />
     <Compile Include="Database.cs" />
     <Compile Include="Common\IDatabase.cs" />
     <Compile Include="Common\Parameter.cs" />
     <Compile Include="Common\ParameterCollection.cs" />
     <Compile Include="DataContext.cs" />
-    <Compile Include="DbTypeConverterSettings.cs" />
+    <Compile Include="Settings\DbTypeConverterSettings.cs" />
     <Compile Include="EntityAdapter.cs" />
     <Compile Include="DataProvider.cs" />
     <Compile Include="Linq\Enumerable.cs" />

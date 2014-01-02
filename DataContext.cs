@@ -13,6 +13,7 @@ using System.Text;
 using RaisingStudio.Data.Common;
 using RaisingStudio.Data.Linq;
 using System.Diagnostics;
+using RaisingStudio.Data.Settings;
 
 namespace RaisingStudio.Data
 {
@@ -496,47 +497,27 @@ namespace RaisingStudio.Data
         }
 
 
-        public int GetCount<T>()
-        {
-            return this.provider.GetCount<T>();
-        }
-
         public int GetCount<T>(Expression<Func<T, bool>> condition)
         {
             return this.provider.GetCount<T>(condition);
         }
 
-        public int GetCount<T>(Expression expression)
+        public int GetCount<T>(Expression expression = null)
         {
             return this.provider.GetCount<T>(expression);
         }
 
-
-        public long GetLongCount<T>()
-        {
-            return this.provider.GetLongCount<T>();
-        }
 
         public long GetLongCount<T>(Expression<Func<T, bool>> condition)
         {
             return this.provider.GetLongCount<T>(condition);
         }
 
-        public long GetLongCount<T>(Expression expression)
+        public long GetLongCount<T>(Expression expression = null)
         {
             return this.provider.GetLongCount<T>(expression);
         }
 
-
-        public object GetMin<T>(Expression<Func<T, object>> columnExpression)
-        {
-            return this.provider.GetMin<T>(GetColumn<T>(columnExpression));
-        }
-
-        public object GetMin<T>(string column)
-        {
-            return this.provider.GetMin<T>(column);
-        }
 
         public object GetMin<T>(Expression<Func<T, object>> columnExpression, Expression<Func<T, bool>> condition)
         {
@@ -548,26 +529,16 @@ namespace RaisingStudio.Data
             return this.provider.GetMin<T>(column, condition);
         }
 
-        public object GetMin<T>(Expression<Func<T, object>> columnExpression, Expression expression)
+        public object GetMin<T>(Expression<Func<T, object>> columnExpression, Expression expression = null)
         {
             return this.provider.GetMin<T>(GetColumn<T>(columnExpression), expression);
         }
 
-        public object GetMin<T>(string column, Expression expression)
+        public object GetMin<T>(string column, Expression expression = null)
         {
             return this.provider.GetMin<T>(column, expression);
         }
 
-
-        public object GetMax<T>(Expression<Func<T, object>> columnExpression)
-        {
-            return this.provider.GetMax<T>(GetColumn<T>(columnExpression));
-        }
-
-        public object GetMax<T>(string column)
-        {
-            return this.provider.GetMax<T>(column);
-        }
 
         public object GetMax<T>(Expression<Func<T, object>> columnExpression, Expression<Func<T, bool>> condition)
         {
@@ -579,26 +550,16 @@ namespace RaisingStudio.Data
             return this.provider.GetMax<T>(column, condition);
         }
 
-        public object GetMax<T>(Expression<Func<T, object>> columnExpression, Expression expression)
+        public object GetMax<T>(Expression<Func<T, object>> columnExpression, Expression expression = null)
         {
             return this.provider.GetMax<T>(GetColumn<T>(columnExpression), expression);
         }
 
-        public object GetMax<T>(string column, Expression expression)
+        public object GetMax<T>(string column, Expression expression = null)
         {
             return this.provider.GetMax<T>(column, expression);
         }
 
-
-        public object GetSum<T>(Expression<Func<T, object>> columnExpression)
-        {
-            return this.provider.GetSum<T>(GetColumn<T>(columnExpression));
-        }
-
-        public object GetSum<T>(string column)
-        {
-            return this.provider.GetSum<T>(column);
-        }
 
         public object GetSum<T>(Expression<Func<T, object>> columnExpression, Expression<Func<T, bool>> condition)
         {
@@ -610,26 +571,16 @@ namespace RaisingStudio.Data
             return this.provider.GetSum<T>(column, condition);
         }
 
-        public object GetSum<T>(Expression<Func<T, object>> columnExpression, Expression expression)
+        public object GetSum<T>(Expression<Func<T, object>> columnExpression, Expression expression = null)
         {
             return this.provider.GetSum<T>(GetColumn<T>(columnExpression), expression);
         }
 
-        public object GetSum<T>(string column, Expression expression)
+        public object GetSum<T>(string column, Expression expression = null)
         {
             return this.provider.GetSum<T>(column, expression);
         }
 
-
-        public object GetAvg<T>(Expression<Func<T, object>> columnExpression)
-        {
-            return this.provider.GetAvg<T>(GetColumn<T>(columnExpression));
-        }
-
-        public object GetAvg<T>(string column)
-        {
-            return this.provider.GetAvg<T>(column);
-        }
 
         public object GetAvg<T>(Expression<Func<T, object>> columnExpression, Expression<Func<T, bool>> condition)
         {
@@ -641,12 +592,12 @@ namespace RaisingStudio.Data
             return this.provider.GetAvg<T>(column, condition);
         }
 
-        public object GetAvg<T>(Expression<Func<T, object>> columnExpression, Expression expression)
+        public object GetAvg<T>(Expression<Func<T, object>> columnExpression, Expression expression = null)
         {
             return this.provider.GetAvg<T>(GetColumn<T>(columnExpression), expression);
         }
 
-        public object GetAvg<T>(string column, Expression expression)
+        public object GetAvg<T>(string column, Expression expression = null)
         {
             return this.provider.GetAvg<T>(column, expression);
         }
@@ -662,17 +613,13 @@ namespace RaisingStudio.Data
             return this.provider.Exists<T>(primaryKeys);
         }
 
-        public bool Exists<T>()
-        {
-            return this.provider.GetCount<T>() > 0;
-        }
 
         public bool Exists<T>(Expression<Func<T, bool>> condition)
         {
             return this.provider.GetCount<T>(condition) > 0;
         }
 
-        public bool Exists<T>(Expression expression)
+        public bool Exists<T>(Expression expression = null)
         {
             return this.provider.GetCount<T>(expression) > 0;
         }

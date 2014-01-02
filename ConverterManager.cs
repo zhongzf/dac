@@ -6,6 +6,7 @@ using System.Data;
 using RaisingStudio.Data.Converters;
 using System.Configuration;
 using System.Diagnostics;
+using RaisingStudio.Data.Settings;
 
 namespace RaisingStudio.Data
 {

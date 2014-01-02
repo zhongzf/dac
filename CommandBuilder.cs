@@ -67,6 +67,7 @@ namespace RaisingStudio.Data
             this.columnTypes = columnTypes;
         }
 
+        // TODO: add a method to deal with brackets, instead of in anywhere.
         public bool UseBrackets
         {
             get;

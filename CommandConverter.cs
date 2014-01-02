@@ -12,6 +12,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using RaisingStudio.Data.Common;
+using RaisingStudio.Data.Settings;
 
 namespace RaisingStudio.Data
 {

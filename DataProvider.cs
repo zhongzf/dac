@@ -12,6 +12,7 @@ using System.Reflection;
 using System.Text;
 using RaisingStudio.Data.Common;
 using System.Configuration;
+using RaisingStudio.Data.Settings;
 
 namespace RaisingStudio.Data
 {
@@ -335,73 +336,38 @@ namespace RaisingStudio.Data
             return entityAdapter.Insert<T>(dataObject, columns);
         }
 
-        public int GetCount<T>()
-        {
-            EntityAdapter entityAdapter = GetEntityAdapter(typeof(T));
-            return entityAdapter.GetCount<T>();
-        }
 
-        public int GetCount<T>(Expression expression)
+        public int GetCount<T>(Expression expression = null)
         {
             EntityAdapter entityAdapter = GetEntityAdapter(typeof(T));
             return entityAdapter.GetCount<T>(expression);
         }
 
-        public long GetLongCount<T>()
-        {
-            EntityAdapter entityAdapter = GetEntityAdapter(typeof(T));
-            return entityAdapter.GetLongCount<T>();
-        }
-
-        public long GetLongCount<T>(Expression expression)
+        public long GetLongCount<T>(Expression expression = null)
         {
             EntityAdapter entityAdapter = GetEntityAdapter(typeof(T));
             return entityAdapter.GetLongCount<T>(expression);
         }
 
-        public object GetSum<T>(string column)
-        {
-            EntityAdapter entityAdapter = GetEntityAdapter(typeof(T));
-            return entityAdapter.GetSum<T>(column);
-        }
-
-        public object GetSum<T>(string column, Expression expression)
+        public object GetSum<T>(string column, Expression expression = null)
         {
             EntityAdapter entityAdapter = GetEntityAdapter(typeof(T));
             return entityAdapter.GetSum<T>(column, expression);
         }
 
-        public object GetAvg<T>(string column)
-        {
-            EntityAdapter entityAdapter = GetEntityAdapter(typeof(T));
-            return entityAdapter.GetAvg<T>(column);
-        }
-
-        public object GetAvg<T>(string column, Expression expression)
+        public object GetAvg<T>(string column, Expression expression = null)
         {
             EntityAdapter entityAdapter = GetEntityAdapter(typeof(T));
             return entityAdapter.GetAvg<T>(column, expression);
         }
 
-        public object GetMin<T>(string column)
-        {
-            EntityAdapter entityAdapter = GetEntityAdapter(typeof(T));
-            return entityAdapter.GetMin<T>(column);
-        }
-
-        public object GetMin<T>(string column, Expression expression)
+        public object GetMin<T>(string column, Expression expression = null)
         {
             EntityAdapter entityAdapter = GetEntityAdapter(typeof(T));
             return entityAdapter.GetMin<T>(column, expression);
         }
 
-        public object GetMax<T>(string column)
-        {
-            EntityAdapter entityAdapter = GetEntityAdapter(typeof(T));
-            return entityAdapter.GetMax<T>(column);
-        }
-
-        public object GetMax<T>(string column, Expression expression)
+        public object GetMax<T>(string column, Expression expression = null)
         {
             EntityAdapter entityAdapter = GetEntityAdapter(typeof(T));
             return entityAdapter.GetMax<T>(column, expression);
