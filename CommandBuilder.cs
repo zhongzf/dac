@@ -570,11 +570,13 @@ namespace RaisingStudio.Data
                                 break;
                             }
 
+                        case ExpressionType.And:
                         case ExpressionType.AndAlso:
                             {
                                 operatorText = "AND";
                                 break;
                             }
+                        case ExpressionType.Or:
                         case ExpressionType.OrElse:
                             {
                                 operatorText = "OR";

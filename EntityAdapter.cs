@@ -140,10 +140,15 @@ namespace RaisingStudio.Data
                 else if ((!this.hasTableAttribute) || (keyAttributes != null && keyAttributes.Length > 0))
                 {
                     properties.Add(propertyInfo);
+                    string dbType;
+                    bool canBeNull;
+                    GetMappingDbType(propertyInfo, out dbType, out canBeNull);
                     ColumnAttribute columnAttribute = new ColumnAttribute
                     {
                         Name = propertyInfo.Name, 
-                        IsPrimaryKey = (keyAttributes != null && keyAttributes.Length > 0)
+                        IsPrimaryKey = (keyAttributes != null && keyAttributes.Length > 0),
+                        DbType = dbType,
+                        CanBeNull = canBeNull
                     };
                     propertyColumnAttributes.Add(columnAttribute);
                 }
@@ -163,6 +168,40 @@ namespace RaisingStudio.Data
                 columnTypes[i] = propertyColumnAttributes[i].DbType;
             }
             return tableName;
+        }
+
+        private static void GetMappingDbType(PropertyInfo propertyInfo, out string dbType, out bool canBeNull)
+        {
+            dbType = "string";
+            canBeNull = false;
+            Type propertyType = propertyInfo.PropertyType;
+            if (propertyType.IsGenericType)
+            {
+                if (propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                {
+                    canBeNull = true;
+                    Type argumentsType = propertyType.GetGenericArguments()[0];
+                    if (TypeManager.IsWellKnownDataType(argumentsType))
+                    {
+                        dbType = TypeManager.GetWellKnownDataTypeName(argumentsType);
+                    }
+                    else
+                    {
+                        // TODO:
+                    }
+                }
+            }
+            else
+            {
+                if (TypeManager.IsWellKnownDataType(propertyType))
+                {
+                    dbType = TypeManager.GetWellKnownDataTypeName(propertyType);
+                }
+                else
+                {
+                    // TODO:
+                }
+            }
         }
 
         public string[] GetMappingProperties(string[] columnNames)
@@ -462,19 +501,40 @@ namespace RaisingStudio.Data
                 while (dataReader.Read())
                 {
                     T dataObject = new T();
+
                     for (int i = 0; i < fieldCount; i++)
                     {
                         object value = dataReader.GetValue(i);
-                        if (Convert.IsDBNull(value))
+                        try
                         {
-                            value = null;
+                            if (Convert.IsDBNull(value))
+                            {
+                                value = null;
+                            }
+                            if (converters[i] != null)
+                            {
+                                value = converters[i](value);
+                            }
+                            propertySetters[i](dataObject, value);
                         }
-                        if (converters[i] != null)
+                        catch (Exception ex)
                         {
-                            value = converters[i](value);
+                            string propertyName = propertyNames[i];
+                            Type propertyType = propertyTypes[i];
+                            string message = string.Empty;
+                            if (value != null)
+                            {
+                                message = string.Format("Could not set the property [{0}] of type [{1}] to value [{2}], the value type is [{3}].", propertyName, typeof(T), value, value.GetType());
+                            }
+                            else
+                            {
+                                message = string.Format("Could not set the property [{0}] of type [{1}] to [null].", propertyName, typeof(T));
+                            }
+                            throw new ApplicationException(message, ex);
                         }
-                        propertySetters[i](dataObject, value);
                     }
+
+
                     yield return dataObject;
                 }
             }
