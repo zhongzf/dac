@@ -118,6 +118,21 @@ namespace RaisingStudio.Data.Settings
             }
         }
 
+
+        [ConfigurationProperty("supportsInsertSelectIdentity", IsRequired = false)]
+        public bool SupportsInsertSelectIdentity
+        {
+            get
+            {
+                return (bool)this["supportsInsertSelectIdentity"];
+            }
+            set
+            {
+                this["supportsInsertSelectIdentity"] = value;
+            }
+        }
+
+
         [ConfigurationProperty("type", IsRequired = false)]
         public string Type
         {

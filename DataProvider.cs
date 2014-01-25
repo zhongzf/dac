@@ -51,7 +51,7 @@ namespace RaisingStudio.Data
             }
         }
         #endregion
-        
+
         public DataProvider(IDbConnection connection, string providerName)
         {
             this.connection = connection;
@@ -63,7 +63,7 @@ namespace RaisingStudio.Data
         public void Dispose()
         {
             this.connection.Dispose();
-            this.connection = null;            
+            this.connection = null;
         }
 
 
@@ -103,22 +103,18 @@ namespace RaisingStudio.Data
                             bool useBrackets = commandBuilderSetting.UseBrackets;
                             string pagingMethod = commandBuilderSetting.PagingMethod;
                             string identityMethod = commandBuilderSetting.IdentityMethod;
+                            bool supportsInsertSelectIdentity = commandBuilderSetting.SupportsInsertSelectIdentity;
+
                             Type commandBuilderType = commandBuilderSetting.CommandBuilderType;
                             if (commandBuilderType != null)
                             {
                                 if (commandBuilderType == typeof(CommandBuilder))
                                 {
                                     commandBuilder = new CommandBuilder(expression, tableName, propertyNames, propertyTypes, columnNames, columnTypes);
-                                    commandBuilder.UseBrackets = useBrackets;
-                                    commandBuilder.PagingMethod = pagingMethod;
-                                    commandBuilder.IdentityMethod = identityMethod;
                                 }
                                 else if (commandBuilderType.IsSubclassOf(typeof(CommandBuilder)))
                                 {
                                     commandBuilder = (CommandBuilder)Activator.CreateInstance(commandBuilderType, expression, tableName, propertyNames, propertyTypes, columnNames, columnTypes);
-                                    commandBuilder.UseBrackets = useBrackets;
-                                    commandBuilder.PagingMethod = pagingMethod;
-                                    commandBuilder.IdentityMethod = identityMethod;
                                 }
                                 else
                                 {
@@ -128,10 +124,13 @@ namespace RaisingStudio.Data
                             else
                             {
                                 commandBuilder = new CommandBuilder(expression, tableName, propertyNames, propertyTypes, columnNames, columnTypes);
-                                commandBuilder.UseBrackets = useBrackets;
-                                commandBuilder.PagingMethod = pagingMethod;
-                                commandBuilder.IdentityMethod = identityMethod;
                             }
+
+                            commandBuilder.UseBrackets = useBrackets;
+                            commandBuilder.PagingMethod = pagingMethod;
+                            commandBuilder.IdentityMethod = identityMethod;
+                            commandBuilderSetting.SupportsInsertSelectIdentity = supportsInsertSelectIdentity;
+
                             break;
                         }
                         catch (Exception ex)
@@ -147,6 +146,7 @@ namespace RaisingStudio.Data
                 commandBuilder.UseBrackets = true;
                 commandBuilder.PagingMethod = "ROW_NUMBER";
                 commandBuilder.IdentityMethod = "IDENTITY";
+                commandBuilder.SupportsInsertSelectIdentity = false;
             }
             return commandBuilder;
         }
@@ -392,7 +392,7 @@ namespace RaisingStudio.Data
             return entityAdapter.GetMappingCommand<T>(command);
         }
 
-        
+
         public IEnumerable EntityExecute<T>(Command command)
         {
             EntityAdapter entityAdapter = GetEntityAdapter(typeof(T));
@@ -412,7 +412,7 @@ namespace RaisingStudio.Data
             return lambda.Compile()(entityAdapter, dataReader);
         }
 
-        public IEnumerable<T> EntityQuery<T>(Command command) where T : new ()
+        public IEnumerable<T> EntityQuery<T>(Command command) where T : new()
         {
             EntityAdapter entityAdapter = GetEntityAdapter(typeof(T));
             return entityAdapter.EntityQuery<T>(command);

@@ -147,7 +147,7 @@ namespace RaisingStudio.Data
                     GetMappingDbType(propertyInfo, out dbType, out canBeNull);
                     ColumnAttribute columnAttribute = new ColumnAttribute
                     {
-                        Name = propertyInfo.Name, 
+                        Name = propertyInfo.Name,
                         IsPrimaryKey = (keyAttributes != null && keyAttributes.Length > 0) || propertyInfo.Name == "Id",
                         IsDbGenerated = propertyInfo.Name == "Id",
                         AutoSync = propertyInfo.Name == "Id" ? AutoSync.OnInsert : AutoSync.Default,
@@ -302,6 +302,12 @@ namespace RaisingStudio.Data
             columnTypes = keyColumnTypes.ToArray();
             return primaryKeys.ToArray();
         }
+
+        private string GetIdentityColumn()
+        {
+            string column = ((this.dbGeneratedColumns != null) && (this.dbGeneratedColumns.Length > 0)) ? this.dbGeneratedColumns[0] : ((this.keyColumns != null) && (this.keyColumns.Length > 0)) ? this.keyColumns[0] : ((this.autoSyncOnInsertColumns != null) && (this.autoSyncOnInsertColumns.Length > 0)) ? this.autoSyncOnInsertColumns[0] : null;
+            return column;
+        }
         #endregion
 
 
@@ -342,7 +348,7 @@ namespace RaisingStudio.Data
             #endregion
             return commandBuilder;
         }
-        
+
 
         public object Execute(Expression expression)
         {
@@ -407,7 +413,7 @@ namespace RaisingStudio.Data
         private void SetParameterValues<T>(Command command, T dataObject)
         {
             Func<object, object>[] converters;
-            Func<T, object>[] propertyGetters = GetPropertyGetters<T>(out converters);            
+            Func<T, object>[] propertyGetters = GetPropertyGetters<T>(out converters);
             for (int i = 0; i < command.Parameters.Count; i++)
             {
                 object value = propertyGetters[i](dataObject);
@@ -497,6 +503,38 @@ namespace RaisingStudio.Data
         }
 
 
+        private object SetPropertyValue<T>(Action<T, object>[] propertySetters, Func<object, object>[] converters, T dataObject, int i, object value)
+        {
+            try
+            {
+                if (Convert.IsDBNull(value))
+                {
+                    value = null;
+                }
+                if (converters[i] != null)
+                {
+                    value = converters[i](value);
+                }
+                propertySetters[i](dataObject, value);
+            }
+            catch (Exception ex)
+            {
+                string propertyName = propertyNames[i];
+                Type propertyType = propertyTypes[i];
+                string message = string.Empty;
+                if (value != null)
+                {
+                    message = string.Format("Could not set the property [{0}] of type [{1}] to value [{2}], the value type is [{3}].", propertyName, typeof(T), value, value.GetType());
+                }
+                else
+                {
+                    message = string.Format("Could not set the property [{0}] of type [{1}] to [null].", propertyName, typeof(T));
+                }
+                throw new ApplicationException(message, ex);
+            }
+            return value;
+        }
+
         private IEnumerable<T> GetEnumerator<T>(IDataReader dataReader, Action<T, object>[] propertySetters, Func<object, object>[] converters) where T : new()
         {
             try
@@ -509,35 +547,8 @@ namespace RaisingStudio.Data
                     for (int i = 0; i < fieldCount; i++)
                     {
                         object value = dataReader.GetValue(i);
-                        try
-                        {
-                            if (Convert.IsDBNull(value))
-                            {
-                                value = null;
-                            }
-                            if (converters[i] != null)
-                            {
-                                value = converters[i](value);
-                            }
-                            propertySetters[i](dataObject, value);
-                        }
-                        catch (Exception ex)
-                        {
-                            string propertyName = propertyNames[i];
-                            Type propertyType = propertyTypes[i];
-                            string message = string.Empty;
-                            if (value != null)
-                            {
-                                message = string.Format("Could not set the property [{0}] of type [{1}] to value [{2}], the value type is [{3}].", propertyName, typeof(T), value, value.GetType());
-                            }
-                            else
-                            {
-                                message = string.Format("Could not set the property [{0}] of type [{1}] to [null].", propertyName, typeof(T));
-                            }
-                            throw new ApplicationException(message, ex);
-                        }
+                        value = SetPropertyValue<T>(propertySetters, converters, dataObject, i, value);
                     }
-
 
                     yield return dataObject;
                 }
@@ -564,25 +575,82 @@ namespace RaisingStudio.Data
             string[] columns;
             Command command = commandBuilder.GetSelectCommand(out columns);
             var dataReader = this.provider.Database.ExecuteReader(command);
-            //if (columns != null)
-            //{
-                return GetEnumerator<T>(dataReader, columns);
-            //}
-            //else
-            //{
-            //    return GetEnumerator<T>(dataReader);
-            //}
+            return GetEnumerator<T>(dataReader, columns);
         }
 
         public int Insert<T>(T dataObject)
         {
             CommandBuilder commandBuilder = GetCommandBuilder(null, tableName, propertyNames, propertyTypes, columnNames, columnTypes);
             string[] columns = this.propertyNames.Except(this.dbGeneratedColumns).ToArray();
+            return Insert<T>(dataObject, columns, commandBuilder);
+        }
+
+        public int Insert<T>(T dataObject, string[] columns)
+        {
+            CommandBuilder commandBuilder = GetCommandBuilder(null, tableName, propertyNames, propertyTypes, columnNames, columnTypes);
+            return Insert(dataObject, columns, commandBuilder);
+        }
+
+        public int Insert<T>(T dataObject, string[] columns, CommandBuilder commandBuilder)
+        {
             Command insertCommand = commandBuilder.GetInsertCommand(columns);
             SetParameterValues<T>(insertCommand, dataObject, new string[] { }, columns);
-            int result = this.provider.Database.ExecuteNonQuery(insertCommand);
-            // TODO: autoSyncOnInsertColumns
-            return result;
+            string identityColumn = GetIdentityColumn();
+            if (!string.IsNullOrEmpty(identityColumn))
+            {
+                Command selectIdentityCommand = commandBuilder.GetIdentityCommand(identityColumn);
+                if (commandBuilder.SupportsInsertSelectIdentity)
+                {
+                    insertCommand.CommandText = insertCommand.CommandText + "; " + selectIdentityCommand.CommandText;
+                    object value = this.provider.Database.ExecuteScalar(insertCommand);
+
+                    Func<object, object>[] converters;
+                    Action<T, object>[] propertySetters = GetPropertySetters<T>(new[] { identityColumn }, out converters);
+                    value = SetPropertyValue<T>(propertySetters, converters, dataObject, 0, value);
+
+                    int result = Convert.ToInt32(value);
+                    return result;
+                }
+                else
+                {
+                    bool closeConnection = false;
+                    try
+                    {
+                        System.Data.ConnectionState previousConnectionState = this.provider.Database.Connection.State;
+                        if ((this.provider.Database.Connection.State & System.Data.ConnectionState.Open) != System.Data.ConnectionState.Open)
+                        {
+                            this.provider.Database.Connection.Open();
+                            closeConnection = true;
+                        }
+
+                        int result = this.provider.Database.ExecuteNonQuery(insertCommand);
+                        if (result > 0)
+                        {
+                            object value = this.provider.Database.ExecuteScalar(selectIdentityCommand);
+                            result = Convert.ToInt32(value);
+
+                            Func<object, object>[] converters;
+                            Action<T, object>[] propertySetters = GetPropertySetters<T>(new[] { identityColumn }, out converters);
+                            value = SetPropertyValue<T>(propertySetters, converters, dataObject, 0, result);
+
+                            return result;
+                        }
+                        return result;
+                    }
+                    finally
+                    {
+                        if (closeConnection)
+                        {
+                            this.provider.Database.Connection.Close();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                int result = this.provider.Database.ExecuteNonQuery(insertCommand);
+                return result;
+            }
         }
 
         public int Delete(Expression expression)
@@ -704,16 +772,6 @@ namespace RaisingStudio.Data
             return this.provider.Database.ExecuteNonQuery(updateCommand);
         }
 
-        public int Insert<T>(T dataObject, string[] columns)
-        {
-            CommandBuilder commandBuilder = GetCommandBuilder(null, tableName, propertyNames, propertyTypes, columnNames, columnTypes);
-            Command insertCommand = commandBuilder.GetInsertCommand(columns);
-            SetParameterValues<T>(insertCommand, dataObject, new string[] { }, columns);
-            int result = this.provider.Database.ExecuteNonQuery(insertCommand);
-            // TODO: autoSyncOnInsertColumns
-            return result;
-        }
-
 
         public int GetCount<T>(Expression expression = null)
         {
@@ -831,10 +889,9 @@ namespace RaisingStudio.Data
         public object GetIdentity<T>()
         {
             CommandBuilder commandBuilder = GetCommandBuilder(null, tableName, propertyNames, propertyTypes, columnNames, columnTypes);
-            string column = ((this.dbGeneratedColumns != null)&&(this.dbGeneratedColumns.Length > 0)) ? this.dbGeneratedColumns[0] : ((this.keyColumns != null)&&(this.keyColumns.Length > 0)) ? this.keyColumns[0] : ((this.autoSyncOnInsertColumns != null)&&(this.autoSyncOnInsertColumns.Length > 0)) ? this.autoSyncOnInsertColumns[0] : null;
-
-            Command command = commandBuilder.GetIdentityCommand(column);
-            return this.provider.Database.ExecuteScalar(command);
+            string identityColumn = GetIdentityColumn();
+            Command selectIdentityCommand = commandBuilder.GetIdentityCommand(identityColumn);
+            return this.provider.Database.ExecuteScalar(selectIdentityCommand);
         }
     }
 }

@@ -80,6 +80,9 @@ namespace RaisingStudio.Data
             set;
         }
 
+        public bool SupportsInsertSelectIdentity { get; set; }
+
+
         public Command GetIdentityCommand(string column)
         {
             if (!string.IsNullOrEmpty(IdentityMethod))
@@ -89,6 +92,14 @@ namespace RaisingStudio.Data
                     case "IDENTITY":
                         {
                             return new Command("SELECT @@IDENTITY");
+                        }
+                    case "SCOPE_IDENTITY":
+                        {
+                            return new Command("SELECT SCOPE_IDENTITY()");
+                        }
+                    case "LASTVAL":
+                        {
+                            return new Command("SELECT LASTVAL()");
                         }
                     case "LAST_INSERT_ROWID":
                         {
