@@ -33,7 +33,6 @@ namespace RaisingStudio.Data
             }
         }
 
-        private bool hasTableAttribute;
         private string[] propertyNames;
         public string[] PropertyNames
         {
@@ -91,15 +90,16 @@ namespace RaisingStudio.Data
         }
 
         #region Mapping
-        private string GetTableName(Type entityType)
+        public static string GetTableName(Type entityType, out bool hasTableAttribute)
         {
+            hasTableAttribute = false;
             Type actualEntityType = entityType;
             while ((entityType != null) && (entityType != typeof(object)))
             {
                 TableAttribute[] tableAttributes = (TableAttribute[])entityType.GetCustomAttributes(typeof(TableAttribute), false);
                 if (tableAttributes.Length > 0)
                 {
-                    this.hasTableAttribute = true;
+                    hasTableAttribute = true;
                     string tableName = tableAttributes[0].Name;
                     if (!string.IsNullOrWhiteSpace(tableName))
                     {
@@ -122,9 +122,10 @@ namespace RaisingStudio.Data
             }
         }
 
-        private string GetEntityMapping(Type entityType, out ColumnAttribute[] propertyAttributes, out string[] propertyNames, out Type[] propertyTypes, out string[] columnNames, out string[] columnTypes)
+        public static string GetEntityMapping(Type entityType, out ColumnAttribute[] propertyAttributes, out string[] propertyNames, out Type[] propertyTypes, out string[] columnNames, out string[] columnTypes)
         {
-            string tableName = GetTableName(entityType);
+            bool hasTableAttribute;
+            string tableName = GetTableName(entityType, out hasTableAttribute);
             List<PropertyInfo> properties = new List<PropertyInfo>();
             List<ColumnAttribute> propertyColumnAttributes = new List<ColumnAttribute>();
             List<string> dbGeneratedColumnList = new List<string>();
@@ -139,7 +140,7 @@ namespace RaisingStudio.Data
                     ColumnAttribute columnAttribute = columnAttributes[0];
                     propertyColumnAttributes.Add(columnAttribute);
                 }
-                else if ((!this.hasTableAttribute) || (keyAttributes != null && keyAttributes.Length > 0))
+                else if ((!hasTableAttribute) || (keyAttributes != null && keyAttributes.Length > 0))
                 {
                     properties.Add(propertyInfo);
                     string dbType;
@@ -174,7 +175,7 @@ namespace RaisingStudio.Data
             return tableName;
         }
 
-        private static void GetMappingDbType(PropertyInfo propertyInfo, out string dbType, out bool canBeNull)
+        public static void GetMappingDbType(PropertyInfo propertyInfo, out string dbType, out bool canBeNull)
         {
             dbType = "string";
             canBeNull = false;

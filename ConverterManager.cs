@@ -531,6 +531,43 @@ namespace RaisingStudio.Data
                 }
                 #endregion
             }
+            if (dbType == System.Data.DbType.Decimal)
+            {
+                #region Decimal
+                if ((type == typeof(bool)) || (type == typeof(bool?)))
+                {
+                    return this.convertToDecimal;
+                }
+                else if (type.IsEnum)
+                {
+                    return this.convertToDecimal;
+                }
+                else if (type.IsGenericType)
+                {
+                    if (type.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    {
+                        Type argumentsType = type.GetGenericArguments()[0];
+                        if (argumentsType.IsEnum)
+                        {
+                            return this.convertToDecimal;
+                        }
+                        else
+                        {
+                            // TODO:
+                            return null;
+                        }
+                    }
+                }
+                else if (type == typeof(string))
+                {
+                    return this.convertToDecimal;
+                }
+                else
+                {
+                    return null;
+                }
+                #endregion
+            }
             else if (dbType == System.Data.DbType.Guid)
             {
                 #region Guid
