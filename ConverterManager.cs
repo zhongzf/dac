@@ -522,12 +522,15 @@ namespace RaisingStudio.Data
                         {
                             return new EnumConverter(argumentsType).ConvertToDbType;
                         }
-                        else
+                        else if (type != typeof(string))
                         {
-                            // TODO: 
-                            return null;
+                            return this.convertToString;
                         }
                     }
+                }
+                else if(type != typeof(string))
+                {
+                    return this.convertToString;
                 }
                 #endregion
             }
