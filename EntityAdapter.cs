@@ -209,19 +209,22 @@ namespace RaisingStudio.Data
             }
         }
 
-        public string[] GetMappingProperties(string[] columnNames)
+        public string[] GetMappingProperties(string[] columnNames, out string[] selectedColumnNames)
         {
             List<string> propertyNameList = new List<string>();
+            List<string> selectedColumnList = new List<string>();
             for (int i = 0; i < columnNames.Length; i++)
             {
                 for (int j = 0; j < this.columnNames.Length; j++)
                 {
-                    if (string.Compare(this.columnNames[j], columnNames[i], true) == 0)
+                    if (string.Equals(this.columnNames[j], columnNames[i], StringComparison.OrdinalIgnoreCase))
                     {
                         propertyNameList.Add(this.propertyNames[j]);
+                        selectedColumnList.Add(columnNames[i]);
                     }
                 }
             }
+            selectedColumnNames = selectedColumnList.ToArray();
             return propertyNameList.ToArray();
         }
 
@@ -308,6 +311,32 @@ namespace RaisingStudio.Data
         {
             string column = ((this.dbGeneratedColumns != null) && (this.dbGeneratedColumns.Length > 0)) ? this.dbGeneratedColumns[0] : ((this.keyColumns != null) && (this.keyColumns.Length > 0)) ? this.keyColumns[0] : ((this.autoSyncOnInsertColumns != null) && (this.autoSyncOnInsertColumns.Length > 0)) ? this.autoSyncOnInsertColumns[0] : null;
             return column;
+        }
+
+
+        public static void GetDataStructure(IDataReader dataReader, out string[] columnNames, out Type[] propertyTypes, out string[] columnTypes)
+        {
+            // TODO: dataReader.GetSchemaTable()
+            int fieldCount = dataReader.FieldCount;
+            columnNames = new string[fieldCount];
+            propertyTypes = new Type[fieldCount];
+            columnTypes = new string[fieldCount];
+            for (int i = 0; i < fieldCount; i++)
+            {
+                columnNames[i] = dataReader.GetName(i);
+                columnTypes[i] = dataReader.GetDataTypeName(i);
+
+                Type fieldType = dataReader.GetFieldType(i);
+                if (fieldType != typeof(string) && (fieldType != typeof(byte[])))
+                {
+                    Type nullableType = typeof(Nullable<>);
+                    propertyTypes[i] = nullableType.MakeGenericType(fieldType);
+                }
+                else
+                {
+                    propertyTypes[i] = fieldType;
+                }
+            }
         }
         #endregion
 
@@ -536,7 +565,7 @@ namespace RaisingStudio.Data
             return value;
         }
 
-        private IEnumerable<T> GetEnumerator<T>(IDataReader dataReader, Action<T, object>[] propertySetters, Func<object, object>[] converters) where T : new()
+        private IEnumerable<T> GetEnumerator<T>(IDataReader dataReader, string[] columnNames, Action<T, object>[] propertySetters, Func<object, object>[] converters) where T : new()
         {
             try
             {
@@ -547,7 +576,7 @@ namespace RaisingStudio.Data
 
                     for (int i = 0; i < fieldCount; i++)
                     {
-                        object value = dataReader.GetValue(i);
+                        object value = columnNames == null ? dataReader.GetValue(i) : dataReader[columnNames[i]];
                         value = SetPropertyValue<T>(propertySetters, converters, dataObject, i, value);
                     }
 
@@ -563,11 +592,11 @@ namespace RaisingStudio.Data
             }
         }
 
-        public IEnumerable<T> GetEnumerator<T>(IDataReader dataReader, string[] columns = null) where T : new()
+        public IEnumerable<T> GetEnumerator<T>(IDataReader dataReader, string[] columns = null, string[] columnNames = null) where T : new()
         {
             Func<object, object>[] converters;
             Action<T, object>[] propertySetters = ((columns != null) && (columns.Length > 0)) ? GetPropertySetters<T>(columns, out converters) : GetPropertySetters<T>(out converters);
-            return GetEnumerator<T>(dataReader, propertySetters, converters);
+            return GetEnumerator<T>(dataReader, columnNames, propertySetters, converters);
         }
 
         public IEnumerable<T> Query<T>(Expression expression) where T : new()
@@ -747,9 +776,10 @@ namespace RaisingStudio.Data
         public IEnumerable<T> Query<T>(string[] columns, Expression expression) where T : new()
         {
             CommandBuilder commandBuilder = GetCommandBuilder(expression, tableName, propertyNames, propertyTypes, columnNames, columnTypes);
-            Command command = commandBuilder.GetSelectCommand(columns);
+            string[] selectedColumnNames;
+            Command command = commandBuilder.GetSelectCommand(columns, out selectedColumnNames);
             var dataReader = this.provider.Database.ExecuteReader(command);
-            return GetEnumerator<T>(dataReader, columns);
+            return GetEnumerator<T>(dataReader, columns, selectedColumnNames);
         }
 
         public int Update<T>(T dataObject, string[] columns)
@@ -858,10 +888,16 @@ namespace RaisingStudio.Data
 
         public IEnumerable<T> EntityQuery<T>(Command command) where T : new()
         {
-            CommandBuilder commandBuilder = GetCommandBuilder(null, tableName, propertyNames, propertyTypes, columnNames, columnTypes);
+            CommandBuilder commandBuilder = GetCommandBuilder(null, tableName, propertyNames, this.propertyTypes, this.columnNames, this.columnTypes);
             Command mappingCommand = commandBuilder.GetMappingCommand<T>(command);
             var dataReader = this.provider.Database.ExecuteReader(mappingCommand);
-            return GetEnumerator<T>(dataReader);
+            string[] columnNames;
+            Type[] propertyTypes;
+            string[] columnTypes;
+            GetDataStructure(dataReader, out columnNames, out propertyTypes, out columnTypes);
+            string[] selectedColumnNames;
+            string[] columns = GetMappingProperties(columnNames, out selectedColumnNames);
+            return GetEnumerator<T>(dataReader, columns, selectedColumnNames);
         }
 
         public int EntityNonQuery<T>(Command command)

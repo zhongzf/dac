@@ -184,32 +184,6 @@ namespace RaisingStudio.Data
             }
         }
 
-        public static void GetDataStructure(IDataReader dataReader, out string[] columnNames, out Type[] propertyTypes, out string[] columnTypes)
-        {
-            // TODO: dataReader.GetSchemaTable()
-            int fieldCount = dataReader.FieldCount;
-            columnNames = new string[fieldCount];
-            propertyTypes = new Type[fieldCount];
-            columnTypes = new string[fieldCount];
-            for (int i = 0; i < fieldCount; i++)
-            {
-                columnNames[i] = dataReader.GetName(i);
-                columnTypes[i] = dataReader.GetDataTypeName(i);
-
-                Type fieldType = dataReader.GetFieldType(i);
-                if (fieldType != typeof(string) && (fieldType != typeof(byte[])))
-                {
-                    Type nullableType = typeof(Nullable<>);
-                    propertyTypes[i] = nullableType.MakeGenericType(fieldType);
-                }
-                else
-                {
-                    propertyTypes[i] = fieldType;
-                }
-            }
-        }
-
-
         public object Execute(Expression expression)
         {
             Type entityType = GetEntityType(expression);
@@ -235,16 +209,17 @@ namespace RaisingStudio.Data
             string[] columnNames;
             Type[] propertyTypes;
             string[] columnTypes;
-            GetDataStructure(dataReader, out columnNames, out propertyTypes, out columnTypes);
+            EntityAdapter.GetDataStructure(dataReader, out columnNames, out propertyTypes, out columnTypes);
             string[] propertyNames = columnNames;
 
             Type entityType = TypeManager.CreateDynamicType("_", "<>_DynamicType", null, propertyNames, propertyTypes);
             EntityAdapter entityAdapter = new EntityAdapter(this, entityType, null, propertyNames, propertyTypes, columnNames, columnTypes);
             var instance = Expression.Parameter(typeof(EntityAdapter), "instance");
-            var parameter = Expression.Parameter(typeof(IDataReader), "dataReader");
-            var call = Expression.Call(instance, "GetEnumerator", new Type[] { entityType }, parameter);
-            var lambda = Expression.Lambda<Func<EntityAdapter, IDataReader, IEnumerable>>(call, instance, parameter);
-            return lambda.Compile()(entityAdapter, dataReader);
+            var dataReaderParameter = Expression.Parameter(typeof(IDataReader), "dataReader");
+            var columnsParameter = Expression.Parameter(typeof(string[]), "columns");
+            var call = Expression.Call(instance, "GetEnumerator", new Type[] { entityType }, dataReaderParameter, columnsParameter);
+            var lambda = Expression.Lambda<Func<EntityAdapter, IDataReader, string[], IEnumerable>>(call, instance, dataReaderParameter, columnsParameter);
+            return lambda.Compile()(entityAdapter, dataReader, null);
         }
 
         public IEnumerable<T> Query<T>(Command command) where T : new()
@@ -254,9 +229,10 @@ namespace RaisingStudio.Data
             string[] columnNames;
             Type[] propertyTypes;
             string[] columnTypes;
-            GetDataStructure(dataReader, out columnNames, out propertyTypes, out columnTypes);
-            string[] columns = entityAdapter.GetMappingProperties(columnNames);
-            return entityAdapter.GetEnumerator<T>(dataReader, columns);
+            EntityAdapter.GetDataStructure(dataReader, out columnNames, out propertyTypes, out columnTypes);
+            string[] selectedColumnNames;
+            string[] columns = entityAdapter.GetMappingProperties(columnNames, out selectedColumnNames);
+            return entityAdapter.GetEnumerator<T>(dataReader, columns, selectedColumnNames);
         }
 
         public int Insert<T>(T dataObject)
@@ -400,16 +376,17 @@ namespace RaisingStudio.Data
             string[] columnNames;
             Type[] propertyTypes;
             string[] columnTypes;
-            GetDataStructure(dataReader, out columnNames, out propertyTypes, out columnTypes);
+            EntityAdapter.GetDataStructure(dataReader, out columnNames, out propertyTypes, out columnTypes);
             string[] propertyNames = columnNames;
 
             Type entityType = TypeManager.CreateDynamicType("_", "<>_DynamicType", null, propertyNames, propertyTypes);
             entityAdapter = new EntityAdapter(this, entityType, null, propertyNames, propertyTypes, columnNames, columnTypes);
             var instance = Expression.Parameter(typeof(EntityAdapter), "instance");
-            var parameter = Expression.Parameter(typeof(IDataReader), "dataReader");
-            var call = Expression.Call(instance, "GetEnumerator", new Type[] { entityType }, parameter);
-            var lambda = Expression.Lambda<Func<EntityAdapter, IDataReader, IEnumerable>>(call, instance, parameter);
-            return lambda.Compile()(entityAdapter, dataReader);
+            var dataReaderParameter = Expression.Parameter(typeof(IDataReader), "dataReader");
+            var columnsParameter = Expression.Parameter(typeof(string[]), "columns");
+            var call = Expression.Call(instance, "GetEnumerator", new Type[] { entityType }, dataReaderParameter, columnsParameter);
+            var lambda = Expression.Lambda<Func<EntityAdapter, IDataReader, string[], IEnumerable>>(call, instance, dataReaderParameter, columnsParameter);
+            return lambda.Compile()(entityAdapter, dataReader, null);
         }
 
         public IEnumerable<T> EntityQuery<T>(Command command) where T : new()

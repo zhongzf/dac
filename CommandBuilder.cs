@@ -1182,9 +1182,9 @@ namespace RaisingStudio.Data
             return selectCommand;
         }
 
-        public virtual Command GetSelectCommand(string[] columns)
+        public virtual Command GetSelectCommand(string[] columns, out string[] columnNames)
         {
-            string[] columnNames = GetColumnNames(columns); 
+            columnNames = GetColumnNames(columns); 
             if (this.expression != null)
             {
                 if (this.commandSegment == null)
@@ -1466,7 +1466,7 @@ namespace RaisingStudio.Data
                     if (!string.IsNullOrWhiteSpace(sortColumn))
                     {
                         string ordering = sortOrdering.Length > i ? sortOrdering[i] : "ASC";
-                        if (string.Compare(ordering, "ASC", true) != 0 && string.Compare(ordering, "DESC", true) != 0)
+                        if (!string.Equals(ordering, "ASC", StringComparison.OrdinalIgnoreCase) && !string.Equals(ordering, "DESC", StringComparison.OrdinalIgnoreCase))
                         {
                             ordering = "ASC";
                         }
