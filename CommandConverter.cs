@@ -203,7 +203,7 @@ namespace RaisingStudio.Data
         {
             string pureParameterName = useParameterPrefixInParameter ? TrimStart(parameterName, parameterPrefix) : parameterName;
             string parameterNameInSql = useParameterPrefixInSql ? (useParameterPrefixInParameter ? parameterName : parameterPrefix + pureParameterName) : pureParameterName;
-            string _parameterNameInParameter = _useParameterPrefixInParameter ? _parameterPrefix + pureParameterName : pureParameterName;
+            string _parameterNameInParameter = useParameterPrefixInParameter ? _parameterPrefix + pureParameterName : pureParameterName;
             string _parameterNameInSql = _usePositionalParameters ? POSITIONALPARAMETER : (_useParameterPrefixInSql ? _parameterPrefix + pureParameterName : pureParameterName);
             if (parameterNameInSql != _parameterNameInSql)
             {

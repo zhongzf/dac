@@ -219,7 +219,7 @@ namespace RaisingStudio.Data.Common
         public object ExecuteScalar(Command command)
         {
             IDbCommand dbCommand = this.commandConverter.Convert(command);
-            var result = this.ExecuteScalar(this.commandConverter.Convert(command));
+            var result = this.ExecuteScalar(dbCommand);
             this.commandConverter.FeedbackParameters(ref command, dbCommand);
             return result;
         }
@@ -227,7 +227,7 @@ namespace RaisingStudio.Data.Common
         public IDataReader ExecuteReader(Command command)
         {
             IDbCommand dbCommand = this.commandConverter.Convert(command);
-            var result = this.ExecuteReader(this.commandConverter.Convert(command));
+            var result = this.ExecuteReader(dbCommand);
             this.commandConverter.FeedbackParameters(ref command, dbCommand);
             return result;
         }
